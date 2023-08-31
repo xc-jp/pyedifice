@@ -95,7 +95,11 @@
       #
       # 3. nix develop .#poetry2nix
       #
-      #    Not working.
+      #    https://github.com/nix-community/poetry2nix#mkpoetryenv
+      #    environment.
+      #    In this environment the tests should pass.
+      #
+      #        ./run_tests.sh
       #
       devShells = {
 
@@ -137,10 +141,70 @@
           };
           preferWheels = true;
           extras = [ "*" ];
-        }).env.overrideAttrs(oldAttrs: {
-          propagatedBuildInputs = [
-            pkgs.libxkbcommon
+          overrides = [
+            (pyfinal: pyprev: {
+              # When we're building with Nix, use the pyside6 from nixpkgs,
+              # not the one from Pypi?
+              pyside6 = pyfinal.pkgs.python3.pkgs.pyside6;
+              shiboken6 = pyfinal.pkgs.python3.pkgs.shiboken6;
+              pyqt6 = pyfinal.pkgs.python3.pkgs.pyqt6;
+              pyqt6-sip = pyfinal.pkgs.python3.pkgs.pyqt6-sip;
+            })
           ];
+        }).env.overrideAttrs(oldAttrs: # {
+          # propagatedBuildInputs = [
+          #   pkgs.libxkbcommon
+
+          #       # pkgs.libGL
+          #       # pkgs.stdenv.cc.cc.lib
+          #       # pkgs.glib
+          #       # pkgs.zlib
+          #       # "/run/opgengl-driver"
+          #       # # pkgs.libxkbcommon
+          #       # pkgs.fontconfig
+          #       # pkgs.xorg.libX11
+          #       # pkgs.freetype
+          #       # pkgs.dbus
+          # ];
+          let
+            libraries = [
+              pkgs.libGL
+              pkgs.stdenv.cc.cc.lib
+              pkgs.glib
+              pkgs.zlib
+              "/run/opgengl-driver"
+              pkgs.libxkbcommon
+              pkgs.fontconfig
+              pkgs.xorg.libX11
+              pkgs.freetype
+              pkgs.dbus
+            ];
+          in
+          {
+            # nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [
+            #   pkgs.libxkbcommon
+            # ];
+            # nativeBuildInputs = oldAttrs.nativeBuildInputs ++ libraries;
+            # buildInputs = libraries;
+
+            # buildInputs = [
+            #   pkgs.qt6.wrapQtAppsHook
+            #   pkgs.makeWrapper
+            #   pkgs.bashInteractive
+            # ];
+            # shellHook = ''
+            #   bashdir=$(mktemp -d)
+            #   makeWrapper "$(type -p bash)" "$bashdir/bash" "''${qtWrapperArgs[@]}"
+            #   exec "$bashdir/bash"
+            # '';
+
+            # LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath libraries}";
+
+            # # https://github.com/NixOS/nixpkgs/issues/80147#issuecomment-784857897
+            # QT_PLUGIN_PATH="${pkgs.qt6.qtbase}/${pkgs.qt6.qtbase.qtPluginPrefix}";
+
+            # # https://github.com/nix-community/home-manager/pull/4306/files
+            # QML2_IMPORT_PATH="${pkgs.qt6.qtbase}/${pkgs.qt6.qtbase.qtQmlPrefix}";
         });
       };
 
