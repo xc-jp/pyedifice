@@ -118,7 +118,7 @@
           };
           preferWheels = true;
           extras = [ "*" ];
-          overrides = [
+          overrides = pkgs.poetry2nix.overrides.withDefaults
             (pyfinal: pyprev: {
               # When we're building with Nix, use the pyside6 from nixpkgs,
               # not the one from PyPI, because I can't figure out how to
@@ -127,10 +127,21 @@
               shiboken6 = pyfinal.pkgs.python3.pkgs.shiboken6;
               pyqt6 = pyfinal.pkgs.python3.pkgs.pyqt6;
               pyqt6-sip = pyfinal.pkgs.python3.pkgs.pyqt6-sip;
-            })
-          ];
-          # extraPackages = ps: [ ps.pip ];
-        });
+            });
+
+          # overrides = [
+          #   (pyfinal: pyprev: {
+          #     # When we're building with Nix, use the pyside6 from nixpkgs,
+          #     # not the one from PyPI, because I can't figure out how to
+          #     # link it with Qt.
+          #     pyside6 = pyfinal.pkgs.python3.pkgs.pyside6;
+          #     shiboken6 = pyfinal.pkgs.python3.pkgs.shiboken6;
+          #     pyqt6 = pyfinal.pkgs.python3.pkgs.pyqt6;
+          #     pyqt6-sip = pyfinal.pkgs.python3.pkgs.pyqt6-sip;
+          #   })
+          # ];
+          extraPackages = ps: [ ps.pip ];
+        }).env;
 
       };
 
