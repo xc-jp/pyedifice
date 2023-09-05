@@ -1,5 +1,7 @@
 {
   inputs = {
+    # Before we try to upgrade nixpkgs we better make sure this is fixed:
+    # https://github.com/nix-community/poetry2nix/issues/1291#issuecomment-1702272801
     nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
     flake-utils.url = "github:numtide/flake-utils";
     poetry2nix = {
@@ -135,6 +137,8 @@
         };
 
         poetry2nix = (pkgs.poetry2nix.mkPoetryEnv {
+          # We cannot currently specify the python version because of
+          # https://github.com/nix-community/poetry2nix/issues/1076
           projectDir = ./.;
           editablePackageSources = {
             edifice = ./edifice;
@@ -144,68 +148,16 @@
           overrides = [
             (pyfinal: pyprev: {
               # When we're building with Nix, use the pyside6 from nixpkgs,
-              # not the one from Pypi?
+              # not the one from PyPI, because I can't figure out how to
+              # link it with Qt.
               pyside6 = pyfinal.pkgs.python3.pkgs.pyside6;
               shiboken6 = pyfinal.pkgs.python3.pkgs.shiboken6;
               pyqt6 = pyfinal.pkgs.python3.pkgs.pyqt6;
               pyqt6-sip = pyfinal.pkgs.python3.pkgs.pyqt6-sip;
             })
           ];
-        }).env.overrideAttrs(oldAttrs: # {
-          # propagatedBuildInputs = [
-          #   pkgs.libxkbcommon
-
-          #       # pkgs.libGL
-          #       # pkgs.stdenv.cc.cc.lib
-          #       # pkgs.glib
-          #       # pkgs.zlib
-          #       # "/run/opgengl-driver"
-          #       # # pkgs.libxkbcommon
-          #       # pkgs.fontconfig
-          #       # pkgs.xorg.libX11
-          #       # pkgs.freetype
-          #       # pkgs.dbus
-          # ];
-          let
-            libraries = [
-              pkgs.libGL
-              pkgs.stdenv.cc.cc.lib
-              pkgs.glib
-              pkgs.zlib
-              "/run/opgengl-driver"
-              pkgs.libxkbcommon
-              pkgs.fontconfig
-              pkgs.xorg.libX11
-              pkgs.freetype
-              pkgs.dbus
-            ];
-          in
-          {
-            # nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [
-            #   pkgs.libxkbcommon
-            # ];
-            # nativeBuildInputs = oldAttrs.nativeBuildInputs ++ libraries;
-            # buildInputs = libraries;
-
-            # buildInputs = [
-            #   pkgs.qt6.wrapQtAppsHook
-            #   pkgs.makeWrapper
-            #   pkgs.bashInteractive
-            # ];
-            # shellHook = ''
-            #   bashdir=$(mktemp -d)
-            #   makeWrapper "$(type -p bash)" "$bashdir/bash" "''${qtWrapperArgs[@]}"
-            #   exec "$bashdir/bash"
-            # '';
-
-            # LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath libraries}";
-
-            # # https://github.com/NixOS/nixpkgs/issues/80147#issuecomment-784857897
-            # QT_PLUGIN_PATH="${pkgs.qt6.qtbase}/${pkgs.qt6.qtbase.qtPluginPrefix}";
-
-            # # https://github.com/nix-community/home-manager/pull/4306/files
-            # QML2_IMPORT_PATH="${pkgs.qt6.qtbase}/${pkgs.qt6.qtbase.qtQmlPrefix}";
         });
+
       };
 
       lib = {
