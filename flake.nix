@@ -41,40 +41,13 @@
         watchdog
       ]);
 
-      # qtOverride = attrs:
-      #   let
-      #     libraries = [
-      #       pkgs.libGL
-      #       pkgs.stdenv.cc.cc.lib
-      #       pkgs.glib
-      #       pkgs.zlib
-      #       "/run/opgengl-driver"
-      #       pkgs.libxkbcommon
-      #       pkgs.fontconfig
-      #       pkgs.xorg.libX11
-      #       pkgs.freetype
-      #       pkgs.dbus
-      #     ];
-      #   in
-      #   attrs // {
-      #     # https://github.com/NixOS/nixpkgs/issues/80147#issuecomment-784857897
-      #     QT_PLUGIN_PATH = with pkgs.qt6; "${qtbase}/${qtbase.qtPluginPrefix}";
-      #     # fixes libstdc++ issues and libgl.so issues
-      #     LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath libraries}";
-      #   };
-
       qtOverride = attrs: attrs // {
           # https://github.com/NixOS/nixpkgs/issues/80147#issuecomment-784857897
           QT_PLUGIN_PATH = with pkgs.qt6; "${qtbase}/${qtbase.qtPluginPrefix}";
         };
 
-
       pythonEnv = qtOverride pythonWithPackages.env;
 
-      # pythonEnv = pythonWithPackages.env.overrideAttrs(finalAttrs: prevAttrs: {
-      #   # https://github.com/NixOS/nixpkgs/issues/80147#issuecomment-784857897
-      #   QT_PLUGIN_PATH = with pkgs.qt6; "${qtbase}/${qtbase.qtPluginPrefix}";
-      # });
     in
     rec {
       # There are 3 devShell flavors here.
@@ -156,6 +129,7 @@
               pyqt6-sip = pyfinal.pkgs.python3.pkgs.pyqt6-sip;
             })
           ];
+          # extraPackages = ps: [ ps.pip ];
         });
 
       };
@@ -165,7 +139,7 @@
         pyedifice = pyedifice_;
       };
       # apps = {
-      #   test = {
+      #   run_tests = {
       #     type = "app";
       #     program = (pythonOverride.withPackages (p: [p.pyedifice]).env) // {
       #       shellHook = ''
