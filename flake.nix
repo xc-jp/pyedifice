@@ -48,8 +48,24 @@
 
       pythonEnv = qtOverride pythonWithPackages.env;
 
+      poetryEnvAttrs = {
+        # We cannot currently specify the python version because of
+        # https://github.com/nix-community/poetry2nix/issues/1076
+        projectDir = ./.;
+        preferWheels = true;
+        overrides = pkgs.poetry2nix.overrides.withDefaults
+          (pyfinal: pyprev: {
+            # When we're building with Nix, use the pyside6 from nixpkgs,
+            # not the one from PyPI, because I can't figure out how to
+            # link it with Qt.
+            pyside6 = pyfinal.pkgs.python3.pkgs.pyside6;
+            shiboken6 = pyfinal.pkgs.python3.pkgs.shiboken6;
+            pyqt6 = pyfinal.pkgs.python3.pkgs.pyqt6;
+            pyqt6-sip = pyfinal.pkgs.python3.pkgs.pyqt6-sip;
+          });
+      };
     in
-    rec {
+    {
       # There are 3 devShell flavors here.
       #
       # 1. nix develop .#default
@@ -109,27 +125,13 @@
             '';
         };
 
-        poetry2nix = (pkgs.poetry2nix.mkPoetryEnv {
-          # We cannot currently specify the python version because of
-          # https://github.com/nix-community/poetry2nix/issues/1076
-          projectDir = ./.;
+        poetry2nix = (pkgs.poetry2nix.mkPoetryEnv (poetryEnvAttrs // {
           editablePackageSources = {
             edifice = ./edifice;
           };
-          preferWheels = true;
           extras = [ "*" ];
-          overrides = pkgs.poetry2nix.overrides.withDefaults
-            (pyfinal: pyprev: {
-              # When we're building with Nix, use the pyside6 from nixpkgs,
-              # not the one from PyPI, because I can't figure out how to
-              # link it with Qt.
-              pyside6 = pyfinal.pkgs.python3.pkgs.pyside6;
-              shiboken6 = pyfinal.pkgs.python3.pkgs.shiboken6;
-              pyqt6 = pyfinal.pkgs.python3.pkgs.pyqt6;
-              pyqt6-sip = pyfinal.pkgs.python3.pkgs.pyqt6-sip;
-            });
           extraPackages = ps: [ ps.pip ];
-        }).env;
+        })).env;
 
       };
 
@@ -139,31 +141,20 @@
       };
       apps =
       let
-        poetryEnv = pkgs.poetry2nix.mkPoetryEnv {
-          # We cannot currently specify the python version because of
-          # https://github.com/nix-community/poetry2nix/issues/1076
-          projectDir = ./.;
-          preferWheels = true;
-          overrides = pkgs.poetry2nix.overrides.withDefaults
-            (pyfinal: pyprev: {
-              # When we're building with Nix, use the pyside6 from nixpkgs,
-              # not the one from PyPI, because I can't figure out how to
-              # link it with Qt.
-              pyside6 = pyfinal.pkgs.python3.pkgs.pyside6;
-              shiboken6 = pyfinal.pkgs.python3.pkgs.shiboken6;
-              pyqt6 = pyfinal.pkgs.python3.pkgs.pyqt6;
-              pyqt6-sip = pyfinal.pkgs.python3.pkgs.pyqt6-sip;
-            });
-        };
         run_tests_sh = pkgs.writeScript "run_tests_sh" (builtins.readFile ./run_tests.sh);
         script = pkgs.writeShellApplication {
           name = "edifice-run-tests";
-          runtimeInputs = [ poetryEnv ];
+          runtimeInputs = [
+            (pkgs.poetry2nix.mkPoetryEnv poetryEnvAttrs)
+          ];
           text = "${run_tests_sh}";
         };
         script-virtualX = pkgs.writeShellApplication {
           name = "edifice-run-tests";
-          runtimeInputs = [ poetryEnv pkgs.xvfb-run ];
+          runtimeInputs = [
+            (pkgs.poetry2nix.mkPoetryEnv poetryEnvAttrs)
+            pkgs.xvfb-run
+          ];
           text = "xvfb-run ${run_tests_sh}";
         };
       in
