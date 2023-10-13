@@ -1483,8 +1483,9 @@ class View(_LinearView):
     def _delete_child(self, i, old_child):
         if self.underlying_layout is not None:
             child_node = self.underlying_layout.takeAt(i)
-            if child_node.widget():
-                child_node.widget().deleteLater() # setParent(self._garbage_collector)
+            if child_node is not None:
+                if child_node.widget():
+                    child_node.widget().deleteLater() # setParent(self._garbage_collector)
         else:
             old_child.underlying.setParent(None)
         old_child._destroy_widgets()
