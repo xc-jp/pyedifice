@@ -176,20 +176,22 @@ class RenderEngine(object):
 
     def _delete_component(self, component, recursive):
         # Delete component from render trees
-        sub_components = self._component_tree[component]
-        if recursive:
-            if isinstance(sub_components, Component):
-                self._delete_component(sub_components, recursive)
-            else:
-                for sub_comp in sub_components:
-                    self._delete_component(sub_comp, recursive)
-            # Node deletion
+        if component in self._component_tree:
+            sub_components = self._component_tree[component]
+            if recursive:
+                if isinstance(sub_components, Component):
+                    self._delete_component(sub_components, recursive)
+                else:
+                    for sub_comp in sub_components:
+                        self._delete_component(sub_comp, recursive)
+                # Node deletion
 
-        for ref in component._edifice_internal_references:
-            ref._value = None
-        component.will_unmount()
-        del self._component_tree[component]
-        del self._widget_tree[component]
+            for ref in component._edifice_internal_references:
+                ref._value = None
+            component.will_unmount()
+            del self._component_tree[component]
+        if component in self._widget_tree:
+            del self._widget_tree[component]
 
     def _refresh_by_class(self, classes):
         # Algorithm:
